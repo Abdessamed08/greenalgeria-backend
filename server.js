@@ -4,6 +4,7 @@ const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
@@ -49,6 +50,9 @@ let collection;
 
 const GEO_USER_AGENT = process.env.NOMINATIM_UA || 'GreenAlgeria/1.0 (+https://greenalgeria.onrender.com)';
 const GEO_PRECISION = parseInt(process.env.GEO_ROUND_PRECISION || '4', 10); // ≈ 11m avec 4 décimales
+
+// 🔹 Clé secrète pour la migration admin
+const SECRET_KEY = process.env.MIGRATION_SECRET_KEY || 'greenalgeria2025_migration_secret_key_change_me';
 
 function roundCoordinate(value) {
     const factor = 10 ** GEO_PRECISION;
@@ -172,5 +176,142 @@ app.get('/api/contributions', async (req, res) => {
     } catch (error) {
         console.error("❌ Erreur lors de la récupération des contributions :", error.message);
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 🔹 Fonction de migration (réutilise la logique de migrateImages.js)
+async function runMigration() {
+    const STATIC_IMAGES_DIR = path.join(__dirname, 'static', 'images');
+    
+    // Créer le dossier s'il n'existe pas
+    if (!fs.existsSync(STATIC_IMAGES_DIR)) {
+        fs.mkdirSync(STATIC_IMAGES_DIR, { recursive: true });
+    }
+    
+    /**
+     * Convertit une image Base64 en fichier binaire
+     */
+    function saveBase64ToFile(base64String, outputPath) {
+        const matches = base64String.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
+        
+        if (!matches || matches.length !== 3) {
+            throw new Error('Format Base64 invalide');
+        }
+        
+        const imageType = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        fs.writeFileSync(outputPath, buffer);
+        
+        return imageType;
+    }
+    
+    const results = {
+        totalFound: 0,
+        migratedCount: 0,
+        errorCount: 0,
+        errors: [],
+        destination: STATIC_IMAGES_DIR
+    };
+    
+    try {
+        if (!collection) {
+            throw new Error("Base de données non initialisée");
+        }
+        
+        // Trouver tous les documents avec des images Base64
+        const documentsWithBase64 = await collection.find({
+            photo: { $regex: '^data:image/' }
+        }).toArray();
+        
+        results.totalFound = documentsWithBase64.length;
+        
+        for (const doc of documentsWithBase64) {
+            try {
+                const docId = doc._id.toString();
+                
+                // Sauvegarder l'image
+                const imageType = saveBase64ToFile(
+                    doc.photo,
+                    path.join(STATIC_IMAGES_DIR, `${docId}.jpg`)
+                );
+                
+                // Nouvelle URL relative
+                const newPhotoUrl = `/static/images/${docId}.jpg`;
+                
+                // Mettre à jour le document
+                const updateResult = await collection.updateOne(
+                    { _id: doc._id },
+                    { 
+                        $set: { 
+                            photo: newPhotoUrl,
+                            migratedAt: new Date(),
+                            originalFormat: imageType
+                        } 
+                    }
+                );
+                
+                if (updateResult.modifiedCount === 1) {
+                    results.migratedCount++;
+                } else {
+                    results.errorCount++;
+                    results.errors.push(`Document ${docId} : Mise à jour échouée`);
+                }
+                
+            } catch (error) {
+                results.errorCount++;
+                results.errors.push(`Document ${doc._id}: ${error.message}`);
+            }
+        }
+        
+        return results;
+        
+    } catch (error) {
+        throw new Error(`Erreur fatale lors de la migration : ${error.message}`);
+    }
+}
+
+// 🔹 Route Admin pour exécuter la migration (protégée par mot de passe)
+app.get('/api/migrate-images-admin', async (req, res) => {
+    try {
+        // Vérifier la clé secrète
+        const providedKey = req.query.key;
+        
+        if (!providedKey || providedKey !== SECRET_KEY) {
+            console.warn('⚠️ Tentative d\'accès non autorisée à la migration');
+            return res.status(403).json({ 
+                success: false, 
+                error: "Accès refusé : Clé secrète invalide" 
+            });
+        }
+        
+        console.log('🔐 Clé valide - Démarrage de la migration...');
+        
+        // Exécuter la migration
+        const results = await runMigration();
+        
+        console.log('✅ Migration terminée');
+        console.log(`📊 Images trouvées : ${results.totalFound}`);
+        console.log(`✅ Migrées avec succès : ${results.migratedCount}`);
+        console.log(`❌ Erreurs : ${results.errorCount}`);
+        
+        return res.json({
+            success: true,
+            message: "Migration exécutée avec succès",
+            results: {
+                totalFound: results.totalFound,
+                migratedCount: results.migratedCount,
+                errorCount: results.errorCount,
+                errors: results.errors.length > 0 ? results.errors : undefined,
+                destination: results.destination
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de la migration :', error.message);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 });
