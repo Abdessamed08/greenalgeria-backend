@@ -2,13 +2,37 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
+const path = require('path');
+const multer = require('multer');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // accepter images encodées en base64
 
+// 🔹 Servir le dossier uploads publiquement
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// 🔹 Configuration Multer pour le stockage des images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'uploads'));
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
+
+// Route pour upload
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  const fileUrl = `https://greenalgeria-backend.onrender.com/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl });
+});
+
 // 🔹 URI MongoDB depuis variable d'environnement
-const uri = process.env.MONGO_URI; // configure MONGO_URI dans Render
+const uri = process.env.MONGO_URI || "mongodb+srv://abdessamed:abdessamed@cluster0.7j0yq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"; // default for local test
 if (!uri) {
     console.error("❌ MONGO_URI non défini !");
     process.exit(1);
@@ -60,16 +84,21 @@ async function reverseGeocode(lat, lng) {
 // 🔹 Connexion MongoDB et démarrage serveur
 async function startServer() {
     try {
+        // Skip connection if no URI provided for simple local test without DB
+        if (uri.includes("cluster0")) { 
+             console.warn("⚠️ Using default/local MONGO_URI for testing.");
+        }
+        
         await client.connect();
         console.log("✅ MongoDB connecté");
 
         const db = client.db("greenalgeriaDB");
         collection = db.collection("contributions");
-
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => console.log(`🚀 Serveur lancé sur port ${PORT}`));
     } catch (err) {
         console.error("❌ Erreur de connexion MongoDB :", err.message);
+    } finally {
+        const PORT = process.env.PORT || 4000;
+        app.listen(PORT, () => console.log(`🚀 Serveur lancé sur port ${PORT}`));
     }
 }
 
