@@ -12,6 +12,9 @@ app.use(express.json({ limit: '10mb' })); // accepter images encodées en base64
 // 🔹 Servir le dossier uploads publiquement
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// 🔹 Servir le dossier static (images migrées) publiquement
+app.use("/static", express.static(path.join(__dirname, "static")));
+
 // 🔹 Configuration Multer pour le stockage des images
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
