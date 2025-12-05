@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الجزائر الخضراء 🌳 | مبادرة الرقمنة البيئية 2025</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
+
+    
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="top-bar__text container">
+            <i class='bx bxs-leaf top-bar__icon'></i> 
+            تم زراعة <span id="tree-count" data-initial="28753" class="top-bar__counter">28,753</span> شجرة. هدفنا: 1,000,000!
+            <span class="tooltip">
+                <i class="fas fa-info-circle" style="font-size: 0.85rem; margin-right: 5px;"></i>
+                <span class="tooltip-text">يتم تحديث هذا الرقم كل 5 ثوانٍ ليعكس الإحصائيات الحية.</span>
+            </span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="2.87" aria-valuemin="0" aria-valuemax="100" aria-label="نسبة التقدم نحو المليون">
+            <div class="progress-bar__fill" id="progressBarFill"></div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="container navbar__content">
+            <a href="#hero" class="navbar__logo" aria-label="الصفحة الرئيسية للجزائر الخضراء">
+                <i class="bx bxs-tree"></i> الجزائر الخضراء
+            </a>
+            <ul class="navbar__links" id="navLinks" role="menu">
+                <li role="menuitem"><a href="#mission" class="navbar__link">الرسالة</a></li>
+                <li role="menuitem"><a href="#stats" class="navbar__link">الأثر والبيانات</a></li>
+                <li role="menuitem"><a href="#map" class="navbar__link">الخريطة التفاعلية</a></li>
+                <li role="menuitem"><a href="#news" class="navbar__link">مركز الأخبار</a></li>
+                <li role="menuitem"><a href="#faq" class="navbar__link">الدعم الفني</a></li>
+                <li role="menuitem"><a href="../form.html" class="btn btn--secondary">ازرع الآن</a></li>
+            </ul>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                 <button id="darkModeToggle" class="dark-mode-toggle" aria-label="تفعيل الوضع الداكن">
+                     <i class="fas fa-moon" id="darkModeIcon"></i>
+                 </button>
+                 <button class="navbar__toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+                     <i class="fas fa-bars"></i>
+                 </button>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero" id="hero">
+        <div class="container hero__grid">
+            <div class="hero__text">
+                <span class="hero__tagline">🌳 مبادرة وطنية رقمية 2025</span>
+                <h1 class="hero__title">
+                    نزرع الأمل. نبني المستقبل الأخضر للجزائر.
+                </h1>
+                <p class="hero__subtitle">انضم إلى أكبر حملة تشجير رقمية، وثّق شجرتك وشاهد الأثر ينمو على خريطتنا التفاعلية والشفافة.</p>
+                <div class="hero__actions">
+                    <a href="../form.html" class="btn btn--primary btn--large">
+                        <i class="fas fa-seedling"></i> ازرع شجرتك الآن
+                    </a>
+                    <a href="#map" class="btn btn--secondary btn--large">
+                        <i class="fas fa-globe-africa"></i> استكشف الخريطة
+                    </a>
+                </div>
+            </div>
+            <div class="hero__image-grid-wrapper">
+                <div class="hero__image-item" style="background-image: url('../images/vert.webp');"></div>
+                <div class="hero__image-item" style="background-image: url('../images/route.webp');"></div>
+            </div>
+        </div>
+    </header>
+
+    <section class="mission" id="mission">
+        <div class="container">
+            <h2 class="section-title">
+                رسالتنا: بناء مستقبل بيئي مستدام
+                <span>رسالة</span>
+            </h2>
+            <p class="section-subtitle">نحن نتبنى أحدث التقنيات لضمان أعلى مستويات الشفافية والكفاءة في جهود التشجير الوطنية.</p>
+            
+            <div class="mission__grid">
+                <div class="mission__card">
+                    <i class="bx bxs-droplet-half mission__icon"></i>
+                    <h3>مكافحة التصحر</h3>
+                    <p>التصدي لزحف الرمال وتثبيت التربة عبر استخدام أصناف أشجار محلية متكيفة مع المناخ الصحراوي.</p>
+                </div>
+                <div class="mission__card">
+                    <i class="bx bxs-analyse mission__icon"></i>
+                    <h3>الشفافية الرقمية</h3>
+                    <p>استخدام الـ GPS والتوثيق المباشر لعرض موقع كل شجرة على خريطتنا، لضمان المساءلة الكاملة.</p>
+                </div>
+                <div class="mission__card">
+                    <i class="bx bxs-group mission__icon"></i>
+                    <h3>التعليم والتوعية</h3>
+                    <p>نشر ثقافة الحفاظ على البيئة من خلال ورش عمل رقمية وميدانية تستهدف الأجيال الصاعدة.</p>
+                </div>
+                <div class="mission__card">
+                    <i class="bx bxs-heart mission__icon"></i>
+                    <h3>دعم التنوع البيولوجي</h3>
+                    <p>التركيز على حماية وزراعة الأنواع المهددة بالانقراض واستعادة النظم البيئية الطبيعية.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats" id="stats">
+        <div class="container">
+            <h2 class="section-title">
+                أثرنا بالأرقام
+                <span>الأرقام</span>
+            </h2>
+            <div class="stats__grid">
+                <div class="stats__item">
+                    <span class="stats__number" data-target="28753">0</span>
+                    <span class="stats__label"><i class="fas fa-tree"></i> شجرة مزروعة</span>
+                </div>
+                <div class="stats__item">
+                    <span class="stats__number" data-target="850">0</span>
+                    <span class="stats__label"><i class="fas fa-map-pin"></i> موقع توثيق (GPS)</span>
+                </div>
+                <div class="stats__item">
+                    <span class="stats__number" data-target="9700">0</span>
+                    <span class="stats__label"><i class="fas fa-users"></i> متطوع/مساهم</span>
+                </div>
+                <div class="stats__item">
+                    <span class="stats__number" data-target="92">0</span>
+                    <span class="stats__label"><i class="fas fa-percent"></i> معدل البقاء (%)</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="map" id="map">
+        <div class="container map__content">
+            <div class="map__text">
+                <h2 class="section-title">شاهد الجزائر تتحول إلى اللون الأخضر</h2>
+                <p class="map__description">منصة تفاعلية متقدمة تتيح لك تتبع التقدم في كل ولاية. كل نقطة تروي قصة مساهمة حقيقية ومستدامة.</p>
+                <ul>
+                    <li><i class="bx bx-check-circle"></i> تحديد موقع الشجرة بدقة **عالية (1 متر)** وتوثيقها.</li>
+                    <li><i class="bx bx-check-circle"></i> تحليل بيانات دقيق يظهر معدلات النمو وأنواع الأشجار.</li>
+                    <li><i class="bx bx-check-circle"></i> إحصائيات مفصلة لمساهمة كل **ولاية** في المشروع.</li>
+                    <li><i class="bx bx-check-circle"></i> تحديثات مستمرة لجهود التشجير في الزمن الحقيقي.</li>
+                </ul>
+                <a href="map.html" class="btn btn--primary map__button">
+                    <i class="fas fa-globe-africa"></i> استكشف الخريطة التفاعلية
+                </a>
+            </div>
+            <div class="map__placeholder">
+                <i class="fas fa-map-marked-alt map__icon-lg"></i>
+                <p>صورة ثلاثية الأبعاد أو خريطة تفاعلية قريباً...</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="news" id="news">
+        <div class="container">
+            <h2 class="section-title">
+                آخر أخبار الجزائر الخضراء
+                <span>الأخبار</span>
+            </h2>
+            <p class="section-subtitle">ابق على اطلاع بأحدث حملات التشجير والنجاحات البيئية عبر ولايات الوطن.</p>
+
+            <div class="news__grid">
+                <article class="news__card">
+                    <img src="https://source.unsplash.com/600x400/?algerian,campaign" alt="حملة تشجير ضخمة في الجنوب" class="news__image">
+                    <div class="news__content">
+                        <span class="news__category">حملة كبرى</span>
+                        <a href="#" class="news__title">نجاح حملة "مليون شتلة" في ولايات الجنوب</a>
+                        <p>تغطية كاملة لحملة التشجير الأخيرة التي استهدفت مناطق بسكرة وورقلة بمشاركة قياسية.</p>
+                        <div class="news__meta">
+                            <span><i class="far fa-calendar-alt"></i> 25 أكتوبر 2025</span>
+                        </div>
+                    </div>
+                </article>
+                <article class="news__card">
+                    <img src="https://source.unsplash.com/600x400/?algeria,education" alt="ورشة توعية بيئية للطلاب" class="news__image">
+                    <div class="news__content">
+                        <span class="news__category news__category--green">توعية</span>
+                        <a href="#" class="news__title">ورشات بيئية في المدارس: غرس ثقافة الاستدامة</a>
+                        <p>نظمت جمعيتنا ورشات تدريبية لأكثر من 1000 طالب حول أهمية الحفاظ على الماء والمناخ.</p>
+                        <div class="news__meta">
+                            <span><i class="far fa-calendar-alt"></i> 10 نوفمبر 2025</span>
+                        </div>
+                    </div>
+                </article>
+                <article class="news__card">
+                    <img src="https://source.unsplash.com/600x400/?technology,map" alt="تحديث نظام التوثيق" class="news__image">
+                    <div class="news__content">
+                        <span class="news__category">تقنية</span>
+                        <a href="#" class="news__title">تحديث نظام توثيق الـ GPS: دقة تصل إلى 1 متر</a>
+                        <p>إطلاق الإصدار الجديد من تطبيق توثيق الزرع لضمان أعلى مستوى من الشفافية والمساءلة.</p>
+                        <div class="news__meta">
+                            <span><i class="far fa-calendar-alt"></i> 01 ديسمبر 2025</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div style="text-align: center; margin-top: 60px;">
+                <a href="../blog.html" class="btn btn--secondary">المزيد من الأخبار <i class="fas fa-arrow-left"></i></a>
+            </div>
+        </div>
+    </section>
+    
+    <section class="faq" id="faq">
+        <div class="container">
+            <h2 class="section-title">
+                أسئلة شائعة
+                <span>أسئلة</span>
+            </h2>
+            <p class="section-subtitle">إجابات سريعة وواضحة لأسئلتكم حول المبادرة والتكنولوجيا المستخدمة.</p>
+            <div class="faq__container" style="max-width: 1000px; margin: 0 auto;">
+                <div class="faq__item">
+                    <button class="faq__question" aria-expanded="false" aria-controls="faq-answer-1" id="faq-q-1">
+                        كيف يمكنني توثيق الشجرة التي زرعتها على الخريطة؟
+                        <i class="fas fa-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer" id="faq-answer-1" role="region" aria-labelledby="faq-q-1">
+                        <p>يمكنك التوثيق عبر تطبيقنا المحمول أو مباشرة من خلال نموذج "ازرع شجرتك الآن". يتطلب منك إدخال إحداثيات GPS وصورة للشجرة لضمان المصداقية والشفافية التامة. يتم مراجعة كل إدخال قبل ظهوره على الخريطة التفاعلية.</p>
+                    </div>
+                </div>
+                <div class="faq__item">
+                    <button class="faq__question" aria-expanded="false" aria-controls="faq-answer-2" id="faq-q-2">
+                        ما هي أنواع الأشجار التي تشجعون على زراعتها في كل منطقة؟
+                        <i class="fas fa-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer" id="faq-answer-2" role="region" aria-labelledby="faq-q-2">
+                        <p>نحن نعتمد فقط على الأنواع المحلية والمتكيفة بيئياً، مثل أشجار الأرز، البلوط، الزيتون البري، والصنوبر الحلبي. هذه الأنواع تضمن أعلى معدل بقاء وتدعم التنوع البيولوجي الجزائري. لدينا قائمة إرشادية مفصلة في قسم المصادر.</p>
+                    </div>
+                </div>
+                <div class="faq__item">
+                    <button class="faq__question" aria-expanded="false" aria-controls="faq-answer-3" id="faq-q-3">
+                        هل يمكن للمؤسسات والشركات المساهمة في المبادرة؟
+                        <i class="fas fa-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer" id="faq-answer-3" role="region" aria-labelledby="faq-q-3">
+                        <p>بالتأكيد! نرحب بالشراكات المؤسساتية ضمن برنامج **"راعي الشجرة الخضراء"**. يمكن للشركات رعاية حملات تشجير كبرى موثقة بالكامل، والحصول على تقارير الأثر البيئي المفصلة. تواصلوا معنا عبر قسم "اتصل بنا" لبدء شراكة خضراء مستدامة.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="final-cta" style="padding: 80px 0; background-color: var(--color-background-grey); text-align: center; border-radius: 50px; margin-top: 50px;">
+        <div class="container">
+            <i class="bx bxs-donate-heart final-cta__icon" style="font-size: 3rem; color: var(--color-red-accent); margin-bottom: 20px;"></i>
+            <h3 class="section-title" style="font-size: 2.2rem; margin-bottom: 20px;">حان الوقت لرد الجميل لوطننا.</h3>
+            <p style="font-size: 1.2rem; margin-bottom: 40px; color: var(--text-muted);">سواء بالزرع أو التطوع أو التبرع، كل جهد له قيمة. كن جزءاً من هذا الإنجاز التاريخي.</p>
+            <a href="../contact.html" class="btn btn--primary btn--large">
+                <i class="fas fa-hands-helping"></i> انطلق نحو العمل!
+            </a>
+        </div>
+    </section>
+
+    <footer class="footer" id="contact" role="contentinfo">
+        <div class="container footer__grid">
+            <div class="footer__col footer__col--about">
+                <a href="#" class="footer__logo">الجزائر الخضراء </a>
+                <p>مبادرة وطنية رائدة تعتمد على التكنولوجيا لتوحيد جهود التشجير عبر كامل التراب الوطني بأقصى شفافية.</p>
+                <div class="footer__social">
+                    <a href="#" aria-label="فيسبوك"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="إنستغرام"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="تويتر"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="لينكدإن"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer__col">
+                <h4>اكتشف</h4>
+                <ul class="footer__links">
+                    <li><a href="#mission">مهمتنا ورؤيتنا</a></li>
+                    <li><a href="../volunteers.html">صفحة المتطوعين</a></li>
+                    <li><a href="../partners.html">شركاؤنا الداعمون</a></li>
+                    <li><a href="#news">آخر الأخبار</a></li>
+                </ul>
+            </div>
+
+            <div class="footer__col">
+                <h4>دعم ومساعدة</h4>
+                <ul class="footer__links">
+                    <li><a href="#faq">الأسئلة الشائعة</a></li>
+                    <li><a href="../contact.html">اتصل بنا</a></li>
+                    <li><a href="../privacy.html">سياسة الخصوصية</a></li>
+                    <li><a href="../terms.html">شروط الاستخدام</a></li>
+                </ul>
+            </div>
+
+            <div class="footer__col footer__col--newsletter">
+                <h4>القائمة البريدية</h4>
+                <p>اشترك لتلقي أحدث الإحصائيات وأخبار حملات التشجير مباشرة إلى بريدك.</p>
+                <form class="newsletter__form">
+                    <input type="email" placeholder="بريدك الإلكتروني" required aria-label="أدخل بريدك الإلكتروني">
+                    <button type="submit" class="btn newsletter__btn" aria-label="اشتراك"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+        <div class="footer__bottom">
+            <p>&copy; 2025 الجزائر الخضراء. صُنعت بشغف من أجل البيئة الجزائرية. <i class="fas fa-heart" style="color: var(--color-red-accent);"></i></p>
+        </div>
+    </footer>
+
+    <button id="back-to-top" aria-label="العودة للأعلى">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    
+        <script src="../js/index.js"></script>
+</body>
+</html>

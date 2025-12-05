@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>الجزائر الخضراء — منصة متقدمة للمساهمات البيئية</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster-src.js"></script>
+<script src="https://unpkg.com/simpleheat/simpleheat.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+
+    <link rel="stylesheet" href="../css/map.css">
+</head>
+<body>
+
+<div class="app" role="application" aria-label="Algérie Verte">
+
+  <aside class="sidebar" id="sidebar" aria-labelledby="title">
+    <div class="brand">
+      <div class="logo">🌳</div>
+      <div>
+        <h1 id="title">الجزائر الخضراء</h1>
+        <p>منصة متقدمة للمساهمات البيئية</p>
+      </div>
+    </div>
+
+    <button class="sidebar-close" onclick="toggleSidebar(false)" aria-label="Fermer la barre latérale"><i class="fas fa-times"></i></button>
+
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-item active" data-target="form-panel" onclick="switchPanel('form-panel', this)"><i class="fas fa-plus-circle"></i> إضافة شجرة</div>
+        <div class="mobile-nav-item" data-target="list-panel" onclick="switchPanel('list-panel', this)"><i class="fas fa-list-ul"></i> المساهمات</div>
+        <div class="mobile-nav-item" data-target="stats-panel" onclick="switchPanel('stats-panel', this)"><i class="fas fa-chart-bar"></i> الإحصاءات</div>
+        <div class="mobile-nav-item" data-target="detail-panel" id="detailNav" style="display:none;" onclick="switchPanel('detail-panel', this)"><i class="fas fa-eye"></i> التفاصيل</div>
+    </div>
+
+    <div class="sidebar-content">
+        <div class="panel mobile-panel" id="form-panel">
+          <h3 id="form-title">سجل شجرتك الجديدة</h3>
+          <form id="treeForm" onsubmit="event.preventDefault(); handleSubmit();" aria-live="polite">
+            <div class="field">
+              <label for="nom">الاسم الكامل / الجهة <span class="required">*</span></label>
+              <input id="nom" name="nom" type="text" placeholder="مثال: محمد بن — جمعية زراعة" required aria-required="true" />
+              <div class="help-text">
+                <i class="fas fa-lightbulb"></i>
+                <span>يمكنك إدخال اسمك الشخصي أو اسم الجمعية/المؤسسة</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="adresse">المنطقة / العنوان (اختياري)</label>
+              <input id="adresse" name="adresse" type="text" placeholder="ولاية، بلدية، أو وصف دقيق" />
+              <div class="help-text">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>يساعد هذا الحقل في تحديد الموقع بشكل أفضل</span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col field">
+                <label for="type_arbre">نوع الشجرة <span class="required">*</span></label>
+                <select id="type_arbre" required aria-required="true">
+                  <option value="">اختر نوع</option>
+                  <option>صنوبر حلبي</option>
+                  <option>أرز الأطلس</option>
+                  <option>زيتون</option>
+                  <option>نخيل</option>
+                  <option>بلوط</option>
+                  <option>أخرى</option>
+                </select>
+              </div>
+              <div class="col field">
+                <label for="quantite">عدد الأشجار المزروعة <span class="required">*</span></label>
+                <input id="quantite" type="number" min="1" placeholder="العدد" required aria-required="true" value="1" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col field">
+                <label for="date_planted">تاريخ الزرع</label>
+                <input id="date_planted" type="date" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="photo">صورة بعد الزرع (اختياري)</label>
+              <input id="photo" type="file" accept="image/*" />
+              <img id="preview" class="preview" alt="معاينة الصورة" style="display:none;" />
+              <div class="help-text">
+                <i class="fas fa-camera"></i>
+                <span>أضف صورة للشجرة المزروعة لتوثيق أفضل. الصيغ المدعومة: JPG, PNG, WebP</span>
+              </div>
+            </div>
+            <div class="field location-group">
+              <label>موقع الزرع <span class="required">*</span></label>
+              <div class="row coords-inputs">
+                <input id="latitude" type="text" readonly placeholder="خط العرض" required aria-required="true" />
+                <input id="longitude" type="text" readonly placeholder="خط الطول" required aria-required="true" />
+              </div>
+              <div class="help-message">
+                <i class="fas fa-info-circle"></i>
+                <span id="locationHelpText">استخدم زر "تحديد موقعي" لتحديد موقعك تلقائياً، أو "اختر على الخريطة" ثم انقر على الخريطة لتحديد الموقع.</span>
+              </div>
+            </div>
+            <div class="form-button-group">
+              <button type="button" class="btn primary" id="geolocationBtn" aria-label="تحديد موقعي الحالي">
+                <i class="fas fa-location-arrow"></i> تحديد موقعي
+              </button>
+              <button type="button" class="btn secondary" id="selectOnMapBtn" aria-label="اختر على الخريطة">
+                <i class="fas fa-map-marker-alt"></i> اختر على الخريطة
+              </button>
+              <button type="submit" class="btn secondary" title="أضف الشجرة" disabled aria-disabled="true">
+                <i class="fas fa-plus-circle"></i> إضافة شجرة
+              </button>
+              <button type="button" class="btn ghost small-action" onclick="resetForm();" aria-label="مسح الحقول">
+                <i class="fas fa-redo"></i> إعادة تعيين
+              </button>
+            </div>
+            <div id="formMessage" role="status" aria-live="polite" style="display: none;"></div>
+          </form>
+        </div>
+
+        <div class="panel mobile-panel" id="stats-panel" style="display:none;">
+          <h3 id="stats-title">إحصاءات وأدوات</h3>
+          <div class="list-title">
+            <strong>إحصاء سريع</strong>
+            <small class="muted" id="lastUpdate">—</small>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-item" role="status" aria-live="polite">
+              <strong id="stat-total-trees">0</strong>
+              <div class="muted">مجموع الأشجار المزروعة</div>
+            </div>
+            <div class="stat-item">
+              <strong id="stat-count">0</strong>
+              <div class="muted">مجموع المساهمات (نقاط)</div>
+            </div>
+            <div class="stat-item">
+              <strong id="stat-types">0</strong>
+              <div class="muted">أنواع الأشجار</div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <input id="quickSearch" placeholder="ابحث بالاسم، الموقع، أو النوع..." oninput="debouncedSearch()" aria-label="بحث سريع" />
+            <select id="sortOrder" onchange="applyFiltersAndSort()" aria-label="ترتيب حسب">
+                <option value="createdAt">الأحدث أولاً</option>
+                <option value="nom">ترتيب أبجدي (الاسم)</option>
+                <option value="type">ترتيب أبجدي (النوع)</option>
+            </select>
+            <select id="typeFilter" onchange="applyFiltersAndSort()" aria-label="فلتر حسب نوع الشجرة">
+                <option value="">كل الأنواع</option>
+                <option>صنوبر حلبي</option>
+                <option>أرز الأطلس</option>
+                <option>زيتون</option>
+                <option>نخيل</option>
+                <option>بلوط</option>
+                <option>أخرى</option>
+            </select>
+          </div>
+
+          <div class="panel-footer-actions" style="margin-top:20px;">
+            <div class="list-title"><strong>إدارة البيانات</strong></div>
+            <div class="file-actions" style="display:flex; gap:8px;">
+              <button class="btn ghost" onclick="exportData()" aria-label="تصدير البيانات بصيغة JSON"><i class="fas fa-download"></i> تصدير (JSON)</button>
+              <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)" aria-label="استيراد ملف JSON">
+              <button class="btn ghost" onclick="document.getElementById('importFile').click()" aria-label="استيراد بيانات JSON"><i class="fas fa-file-import"></i> استيراد</button>
+              <button class="btn danger" onclick="clearAllData()" aria-label="مسح كل البيانات"><i class="fas fa-trash-alt"></i> مسح الكل</button>
+            </div>
+            <small class="muted" style="margin-top:8px; display:block;">تصدير/استيراد يحفظ بيانات الخريطة محليًا.</small>
+          </div>
+
+          <div class="remote-sample" aria-live="polite">
+            <h4>معاينة صورة من MongoDB</h4>
+            <p class="muted">نقوم بجلب آخر مساهمة من الخادم للتأكد من أن الصور محفوظة وتظهر بشكل صحيح.</p>
+            <img id="remoteSamplePhoto" class="detail-img" alt="صورة مساهمة محملة من MongoDB" style="display:none;" />
+            <small id="remoteSampleInfo" class="muted" style="display:none;"></small>
+            <button type="button" class="btn ghost" onclick="loadRemoteSample()" style="margin-top:12px;">
+              <i class="fas fa-sync-alt"></i> تحديث المعاينة
+            </button>
+          </div>
+        </div>
+
+        <div class="panel panel-list mobile-panel" id="list-panel" style="display:none;">
+          <h3 id="list-title">قائمة المساهمات</h3>
+          <div class="list-title">
+            <strong>النتائج (<span id="resultsCount">0</span>)</strong>
+            <small id="filterInfo">الكل</small>
+          </div>
+          <div id="locationsList" style="flex-grow:1;" role="list"></div>
+        </div>
+
+        <div class="panel mobile-panel" id="detail-panel" style="display:none;">
+            <div class="detail-header">
+                <h3 id="detail-title">تفاصيل المساهمة</h3>
+                <button class="btn icon-only primary" title="تعديل" onclick="openEditModal(this.dataset.id)" data-id="" id="detailEditBtn">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn icon-only danger" title="حذف" onclick="removeEntry(this.dataset.id); switchPanel('list-panel');" data-id="" id="detailDeleteBtn">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+            
+            <img id="detail-photo" class="detail-img" alt="صورة للمساهمة" src="https://via.placeholder.com/400x200?text=No+Image" />
+
+            <div class="detail-meta-item">
+                <strong>نوع الشجرة</strong>
+                <span id="detail-type">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>العدد</strong>
+                <span id="detail-quantite">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>الزارع / الجهة</strong>
+                <span id="detail-nom">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>العنوان / المنطقة</strong>
+                <span id="detail-adresse">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>المدينة</strong>
+                <span id="detail-city">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>الحي / المقاطعة</strong>
+                <span id="detail-district">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>تاريخ الزرع</strong>
+                <span id="detail-date">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>أُضيف في</strong>
+                <span id="detail-createdAt">-</span>
+            </div>
+            <div class="detail-meta-item">
+                <strong>إحداثيات</strong>
+                <span id="detail-coords">-</span>
+            </div>
+            <div class="detail-actions">
+                <button class="btn primary" onclick="centerOn(parseFloat(document.getElementById('detail-lat').value), parseFloat(document.getElementById('detail-lng').value), 14);">
+                    <i class="fas fa-crosshairs"></i> توجيه الخريطة
+                </button>
+                <input type="hidden" id="detail-lat">
+                <input type="hidden" id="detail-lng">
+            </div>
+        </div>
+
+        <div class="meta-footer" id="desktop-footer">تعمل المنصة محلياً — لمشاركة النقاط بين مستخدمين تحتاج backend.</div>
+    </div>
+  </aside>
+
+  <main class="mapwrap" role="main">
+    <div id="map" aria-label="خريطة الجزائر"></div>
+
+    <div class="map-controls" role="toolbar" aria-label="أدوات الخريطة">
+      <button class="toggle" onclick="zoomToAlgeria()" title="ركز على الجزائر" aria-label="ركز على الجزائر"><i class="fas fa-globe"></i></button>
+      <button class="toggle" onclick="fitAllMarkers()" title="اظهر كل العلامات" aria-label="اظهر كل العلامات"><i class="fas fa-layer-group"></i></button>
+      <button class="toggle" id="toggleHeat" onclick="toggleHeatmap()" title="تبديل خريطة الحرارة" aria-pressed="false" aria-label="تبديل خريطة الحرارة"><i class="fas fa-fire"></i></button>
+      <button class="toggle" id="toggleStyle" onclick="toggleStyle()" title="سمة الخريطة" aria-pressed="false" aria-label="تبديل سمة الخريطة"><i class="fas fa-adjust"></i></button>
+    </div>
+
+    <div class="fab-button" onclick="toggleSidebar(true, 'form-panel')" role="button" aria-label="إضافة شجرة جديدة">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <div class="toast" id="toast" style="opacity: 0;" role="alert" aria-live="assertive"></div>
+  </main>
+
+</div>
+
+<div class="modal-overlay" id="editModalOverlay">
+    <div class="modal-content" id="editModalContent" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
+        <button class="modal-close" onclick="closeModal()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+        <h3 id="modal-edit-title">تعديل المساهمة</h3>
+        <form id="editForm">
+            <input type="hidden" id="editId">
+            <div class="field">
+                <label for="editNom">الاسم الكامل / الجهة <span class="required">*</span></label>
+                <input id="editNom" type="text" required aria-required="true" />
+            </div>
+            <div class="field">
+                <label for="editAdresse">المنطقة / العنوان (اختياري)</label>
+                <input id="editAdresse" type="text" />
+            </div>
+            <div class="row">
+                <div class="col field">
+                    <label for="editTypeArbre">نوع الشجرة <span class="required">*</span></label>
+                    <select id="editTypeArbre" required aria-required="true">
+                        <option>صنوبر حلبي</option>
+                        <option>أرز الأطلس</option>
+                        <option>زيتون</option>
+                        <option>نخيل</option>
+                        <option>بلوط</option>
+                        <option>أخرى</option>
+                    </select>
+                </div>
+                <div class="col field">
+                    <label for="editQuantite">عدد الأشجار المزروعة <span class="required">*</span></label>
+                    <input id="editQuantite" type="number" min="1" placeholder="العدد" required aria-required="true" />
+                </div>
+            </div>
+             <div class="row">
+                <div class="col field">
+                    <label for="editDatePlanted">تاريخ الزرع</label>
+                    <input id="editDatePlanted" type="date" />
+                </div>
+             </div>
+             <div class="field">
+                <label for="editPhoto">صورة بعد الزرع (اختياري)</label>
+                <input id="editPhoto" type="file" accept="image/*" />
+                <div class="help-text">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>يمكنك اختيار صورة جديدة لاستبدال الصورة الحالية</span>
+                </div>
+                <div id="editPhotoPreview" style="margin-top: 10px; display: none;">
+                    <img id="editPhotoPreviewImg" src="" alt="معاينة الصورة" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: var(--shadow-sm);" />
+                </div>
+            </div>
+             <div class="field location-group">
+                <label>موقع الزرع <span class="required">*</span></label>
+                <div class="row coords-inputs">
+                    <input id="editLatitude" type="text" readonly placeholder="خط العرض" required aria-required="true" />
+                    <input id="editLongitude" type="text" readonly placeholder="خط الطول" required aria-required="true" />
+                </div>
+                <small class="muted">يمكنك سحب العلامة على الخريطة لتغيير الموقع.</small>
+            </div>
+            <div class="form-button-group">
+                <button type="button" class="btn danger" onclick="removeEntry(document.getElementById('editId').value); closeModal();">
+                    <i class="fas fa-trash-alt"></i> حذف المساهمة
+                </button>
+                <button type="submit" class="btn primary" id="saveEditBtn">
+                    <i class="fas fa-save"></i> حفظ التغييرات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+    <script src="../js/map.js"></script>
+</body>
+</html>
