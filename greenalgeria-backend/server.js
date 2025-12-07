@@ -10,8 +10,15 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // accepter images encodées en base64
 
+// 🔹 Créer le dossier uploads s'il n'existe pas
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('📁 Dossier uploads créé');
+}
+
 // 🔹 Servir le dossier uploads publiquement
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(uploadsDir));
 
 // 🔹 Servir le dossier static (images migrées) publiquement
 app.use("/static", express.static(path.join(__dirname, "static")));
