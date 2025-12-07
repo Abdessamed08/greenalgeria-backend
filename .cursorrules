@@ -1,0 +1,7 @@
+IMPORTANT: workspace multi-repo
+
+1) ./greenalgeria  -> repo: https://github.com/Abdessamed08/greenalgeria.git  (branche: sauvegarde-main)
+2) ./greenalgeria-backend -> repo: https://github.com/Abdessamed08/greenalgeria-backend.git  (branche: main)
+
+Règle: Avant tout commit/push, indiquer explicitement le repo cible.
+Ne jamais faire de commit global sur le workspace racine.
