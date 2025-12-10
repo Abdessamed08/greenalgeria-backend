@@ -1,0 +1,25 @@
+# Dépendances Node.js
+node_modules/
+
+# Fichiers d'environnement
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Dossier uploads (images utilisateurs - stockées sur le serveur, pas dans Git)
+uploads/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+

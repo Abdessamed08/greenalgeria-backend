@@ -1,14 +1,24 @@
 // server.js
+require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
+const NodeCache = require('node-cache');
+const mongoSanitize = require('express-mongo-sanitize');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // accepter images encodées en base64
+app.use(mongoSanitize());
+
+const BASE_URL = (process.env.BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
+const NOMINATIM_MIN_GAP_MS = parseInt(process.env.NOMINATIM_MIN_GAP_MS || '500', 10);
+const GEO_CACHE_PRECISION = parseInt(process.env.GEO_CACHE_PRECISION || '3', 10);
 
 // 🔹 Créer le dossier uploads s'il n'existe pas
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -34,16 +44,87 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowed.includes(file.mimetype)) {
+      return cb(null, true);
+    }
+    return cb(new Error('INVALID_FILE_TYPE'));
+  }
+});
+
+// 🔹 Rate limits
+const contributionsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 🔹 Validation
+const contributionValidators = [
+  body('lat').exists().withMessage('lat requis').isFloat({ min: -90, max: 90 }).withMessage('lat invalide'),
+  body('lng').exists().withMessage('lng requis').isFloat({ min: -180, max: 180 }).withMessage('lng invalide'),
+  body().custom((value) => {
+    if (!value || Object.keys(value).length === 0) {
+      throw new Error('payload vide');
+    }
+    return true;
+  })
+];
+
+function logRequest(routeName) {
+    return (req, res, next) => {
+        const start = Date.now();
+        const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress;
+        res.on('finish', () => {
+            const entry = {
+                ts: new Date().toISOString(),
+                ip,
+                method: req.method,
+                path: req.originalUrl,
+                route: routeName,
+                status: res.statusCode,
+                durationMs: Date.now() - start,
+            };
+            console.log(JSON.stringify(entry));
+        });
+        next();
+    };
+}
 
 // Route pour upload
-app.post('/api/upload', upload.single('image'), (req, res) => {
-  const fileUrl = `https://greenalgeria-backend.onrender.com/uploads/${req.file.filename}`;
-  res.json({ url: fileUrl });
+app.post('/api/upload', logRequest('upload'), uploadLimiter, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      if (err.message === 'INVALID_FILE_TYPE') {
+        return res.status(400).json({ success: false, error: 'Type de fichier non autorisé' });
+      }
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, error: 'Fichier trop volumineux (max 3MB)' });
+      }
+      return res.status(400).json({ success: false, error: 'Upload échoué' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Aucun fichier fourni' });
+    }
+    const fileUrl = `${BASE_URL}/uploads/${req.file.filename}`;
+    return res.json({ success: true, url: fileUrl });
+  });
 });
 
 // 🔹 URI MongoDB depuis variable d'environnement
-const uri = process.env.MONGO_URI || "mongodb+srv://abdessamed:abdessamed@cluster0.7j0yq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"; // default for local test
+const uri = process.env.MONGO_URI;
 if (!uri) {
     console.error("❌ MONGO_URI non défini !");
     process.exit(1);
@@ -58,12 +139,34 @@ let collection;
 const GEO_USER_AGENT = process.env.NOMINATIM_UA || 'GreenAlgeria/1.0 (+https://greenalgeria.onrender.com)';
 const GEO_PRECISION = parseInt(process.env.GEO_ROUND_PRECISION || '4', 10); // ≈ 11m avec 4 décimales
 
+const geoCache = new NodeCache({ stdTTL: 3600, useClones: false });
+let lastGeoCallTs = 0;
+
 function roundCoordinate(value) {
     const factor = 10 ** GEO_PRECISION;
     return Math.round(value * factor) / factor;
 }
 
+function cacheKey(lat, lng) {
+    return `${lat.toFixed(GEO_CACHE_PRECISION)}|${lng.toFixed(GEO_CACHE_PRECISION)}`;
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function reverseGeocode(lat, lng) {
+    const key = cacheKey(lat, lng);
+    const cached = geoCache.get(key);
+    if (cached) return cached;
+
+    const now = Date.now();
+    const wait = Math.max(0, NOMINATIM_MIN_GAP_MS - (now - lastGeoCallTs));
+    if (wait > 0) {
+        await sleep(wait);
+    }
+    lastGeoCallTs = Date.now();
+
     const params = new URLSearchParams({
         format: 'jsonv2',
         lat: lat.toString(),
@@ -72,24 +175,32 @@ async function reverseGeocode(lat, lng) {
         addressdetails: '1'
     });
 
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
-        headers: {
-            'User-Agent': GEO_USER_AGENT,
-            'Accept-Language': 'ar,en'
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+            headers: {
+                'User-Agent': GEO_USER_AGENT,
+                'Accept-Language': 'ar,en'
+            },
+            timeout: 8000
+        });
+
+        if (!response.ok) {
+            throw new Error(`Nominatim error ${response.status}`);
         }
-    });
 
-    if (!response.ok) {
-        throw new Error(`Nominatim error ${response.status}`);
+        const payload = await response.json();
+        const address = payload.address || {};
+
+        const result = {
+            city: address.city || address.town || address.village || address.municipality || address.county || null,
+            district: address.suburb || address.neighbourhood || address.city_district || address.state_district || null
+        };
+        geoCache.set(key, result);
+        return result;
+    } catch (err) {
+        console.warn('⚠️ Reverse geocoding fallback:', err.message);
+        return { city: null, district: null };
     }
-
-    const payload = await response.json();
-    const address = payload.address || {};
-
-    return {
-        city: address.city || address.town || address.village || address.municipality || address.county || null,
-        district: address.suburb || address.neighbourhood || address.city_district || address.state_district || null
-    };
 }
 
 // 🔹 Connexion MongoDB et démarrage serveur
@@ -116,17 +227,20 @@ async function startServer() {
 startServer();
 
 // 🔹 Endpoint pour ajouter une contribution
-app.post('/api/contributions', async (req, res) => {
+app.post('/api/contributions', logRequest('contributions'), contributionsLimiter, contributionValidators, async (req, res) => {
     try {
         if (!collection) {
             return res.status(503).json({ success: false, error: "Base de données non initialisée" });
         }
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, error: "Données invalides", details: errors.array() });
+        }
+
         console.log("📥 Données reçues :", req.body);
 
         const data = req.body;
-        if (!data || Object.keys(data).length === 0) {
-            return res.status(400).json({ success: false, error: "Données vides" });
-        }
 
         const latNum = parseFloat(data.lat);
         const lngNum = parseFloat(data.lng);
