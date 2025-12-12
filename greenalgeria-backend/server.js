@@ -119,7 +119,9 @@ app.post('/api/upload', logRequest('upload'), uploadLimiter, (req, res, next) =>
       return res.status(400).json({ success: false, error: 'Aucun fichier fourni' });
     }
     const fileUrl = `${BASE_URL}/uploads/${req.file.filename}`;
-    return res.json({ success: true, url: fileUrl });
+    // Correction pour éviter double protocole si BASE_URL contient déjà http
+    const cleanUrl = fileUrl.replace(/([^:]\/)\/+/g, "$1");
+    return res.json({ success: true, url: cleanUrl });
   });
 });
 
