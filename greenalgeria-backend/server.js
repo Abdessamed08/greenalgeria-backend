@@ -11,6 +11,9 @@ const { body, validationResult } = require('express-validator');
 const NodeCache = require('node-cache');
 // const mongoSanitize = require('express-mongo-sanitize');
 
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // accepter images encodées en base64
@@ -20,33 +23,47 @@ const BASE_URL = (process.env.BASE_URL || 'http://localhost:4000').replace(/\/+$
 const NOMINATIM_MIN_GAP_MS = parseInt(process.env.NOMINATIM_MIN_GAP_MS || '500', 10);
 const GEO_CACHE_PRECISION = parseInt(process.env.GEO_CACHE_PRECISION || '3', 10);
 
-// 🔹 Créer le dossier uploads s'il n'existe pas
+// 🔹 Créer le dossier uploads s'il n'existe pas (toujours utile en local/fallback)
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('📁 Dossier uploads créé');
 }
 
-// 🔹 Servir le dossier uploads publiquement
+// 🔹 Servir le dossier uploads publiquement (pour fallback local)
 app.use("/uploads", express.static(uploadsDir));
-
-// 🔹 Servir le dossier static (images migrées) publiquement
 app.use("/static", express.static(path.join(__dirname, "static")));
 
-// 🔹 Configuration Multer pour le stockage des images
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'uploads'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// 🔹 Config Cloudinary
+if (process.env.CLOUDINARY_URL) {
+    console.log('☁️  Cloudinary activé');
+} else {
+    console.warn('⚠️  CLOUDINARY_URL manquant - Upload local seulement (éphémère sur Render)');
+}
+
+const storage = process.env.CLOUDINARY_URL 
+    ? new CloudinaryStorage({
+        cloudinary: cloudinary,
+        params: {
+            folder: 'greenalgeria',
+            allowed_formats: ['jpg', 'png', 'webp', 'jpeg'],
+            transformation: [{ width: 1000, crop: "limit" }]
+        },
+      })
+    : multer.diskStorage({ // Fallback local
+        destination: (req, file, cb) => {
+            const uploadsDir = path.join(__dirname, 'uploads');
+            if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+            cb(null, uploadsDir);
+        },
+        filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, uniqueSuffix + path.extname(file.originalname));
+        }
+      });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB max
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
   fileFilter: (req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
     if (allowed.includes(file.mimetype)) {
@@ -118,10 +135,12 @@ app.post('/api/upload', logRequest('upload'), uploadLimiter, (req, res, next) =>
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'Aucun fichier fourni' });
     }
-    const fileUrl = `${BASE_URL}/uploads/${req.file.filename}`;
-    // Correction pour éviter double protocole si BASE_URL contient déjà http
-    const cleanUrl = fileUrl.replace(/([^:]\/)\/+/g, "$1");
-    return res.json({ success: true, url: cleanUrl });
+    
+    // Si Cloudinary est utilisé, req.file.path contient l'URL sécurisée
+    // Sinon, on construit l'URL locale
+    const fileUrl = req.file.path || `${BASE_URL}/uploads/${req.file.filename}`;
+    
+    return res.json({ success: true, url: fileUrl });
   });
 });
 

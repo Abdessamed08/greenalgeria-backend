@@ -27,6 +27,8 @@
     "express-mongo-sanitize": "^2.2.0",
     "mongodb": "^7.0.0",
     "multer": "^2.0.2",
+    "cloudinary": "^1.41.0",
+    "multer-storage-cloudinary": "^4.0.0",
     "node-cache": "^5.1.2"
   }
 }
