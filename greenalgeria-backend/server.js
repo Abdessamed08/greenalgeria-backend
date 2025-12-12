@@ -136,9 +136,14 @@ app.post('/api/upload', logRequest('upload'), uploadLimiter, (req, res, next) =>
       return res.status(400).json({ success: false, error: 'Aucun fichier fourni' });
     }
     
-    // Si Cloudinary est utilisé, req.file.path contient l'URL sécurisée
-    // Sinon, on construit l'URL locale
-    const fileUrl = req.file.path || `${BASE_URL}/uploads/${req.file.filename}`;
+    // Si Cloudinary est configuré, on utilise l'URL fournie par le storage
+    // Sinon, on construit l'URL locale manuellement
+    let fileUrl;
+    if (process.env.CLOUDINARY_URL) {
+        fileUrl = req.file.path;
+    } else {
+        fileUrl = `${BASE_URL}/uploads/${req.file.filename}`;
+    }
     
     return res.json({ success: true, url: fileUrl });
   });
