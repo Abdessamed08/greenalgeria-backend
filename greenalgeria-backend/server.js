@@ -9,12 +9,12 @@ const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const NodeCache = require('node-cache');
-const mongoSanitize = require('express-mongo-sanitize');
+// const mongoSanitize = require('express-mongo-sanitize');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // accepter images encodées en base64
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 
 const BASE_URL = (process.env.BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
 const NOMINATIM_MIN_GAP_MS = parseInt(process.env.NOMINATIM_MIN_GAP_MS || '500', 10);
