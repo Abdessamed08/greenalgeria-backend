@@ -1,0 +1,4 @@
+﻿[submodule "greenalgeria"]
+path = greenalgeria
+url = https://github.com/Abdessamed08/greenalgeria.git
+branch = sauvegarde-main
