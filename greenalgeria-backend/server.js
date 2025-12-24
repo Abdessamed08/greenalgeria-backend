@@ -219,13 +219,14 @@ async function reverseGeocode(lat, lng) {
 
         const result = {
             city: address.city || address.town || address.village || address.municipality || address.county || null,
-            district: address.suburb || address.neighbourhood || address.city_district || address.state_district || null
+            district: address.suburb || address.neighbourhood || address.city_district || address.state_district || null,
+            state: address.state || address.region || null // Ajout explicite de la Wilaya
         };
         geoCache.set(key, result);
         return result;
     } catch (err) {
         console.warn('⚠️ Reverse geocoding fallback:', err.message);
-        return { city: null, district: null };
+        return { city: null, district: null, state: null };
     }
 }
 
@@ -286,9 +287,10 @@ app.post('/api/contributions', logRequest('contributions'), contributionsLimiter
         };
 
         try {
-            const { city, district } = await reverseGeocode(roundedLat, roundedLng);
+            const { city, district, state } = await reverseGeocode(roundedLat, roundedLng);
             if (city) data.city = city;
             if (district) data.district = district;
+            if (state) data.state = state; // Stocker la Wilaya
             data.geocodedAt = new Date();
         } catch (geoError) {
             console.warn('⚠️ Reverse geocoding échoué:', geoError.message);
