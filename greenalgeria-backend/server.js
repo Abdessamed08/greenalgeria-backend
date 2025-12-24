@@ -312,7 +312,7 @@ app.get('/api/contributions', async (req, res) => {
         if (!collection) {
             return res.status(503).json({ success: false, error: "Base de données non initialisée" });
         }
-        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
+        const limit = Math.min(parseInt(req.query.limit, 10) || 500, 1000);
         const docs = await collection
             .find({})
             .sort({ createdAt: -1 })
@@ -321,6 +321,113 @@ app.get('/api/contributions', async (req, res) => {
         res.json(docs);
     } catch (error) {
         console.error("❌ Erreur lors de la récupération des contributions :", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 🔹 Endpoint pour récupérer une contribution par ID
+app.get('/api/contributions/:id', async (req, res) => {
+    try {
+        if (!collection) {
+            return res.status(503).json({ success: false, error: "Base de données non initialisée" });
+        }
+        
+        const { ObjectId } = require('mongodb');
+        const id = req.params.id;
+        
+        let query;
+        // Support both MongoDB ObjectId and custom string IDs
+        if (ObjectId.isValid(id) && id.length === 24) {
+            query = { $or: [{ _id: new ObjectId(id) }, { id: id }] };
+        } else {
+            query = { id: id };
+        }
+        
+        const doc = await collection.findOne(query);
+        
+        if (!doc) {
+            return res.status(404).json({ success: false, error: "Contribution non trouvée" });
+        }
+        
+        res.json(doc);
+    } catch (error) {
+        console.error("❌ Erreur lors de la récupération :", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 🔹 Endpoint pour mettre à jour une contribution (PUT)
+app.put('/api/contributions/:id', logRequest('update'), contributionsLimiter, async (req, res) => {
+    try {
+        if (!collection) {
+            return res.status(503).json({ success: false, error: "Base de données non initialisée" });
+        }
+        
+        const { ObjectId } = require('mongodb');
+        const id = req.params.id;
+        const updateData = req.body;
+        
+        // Remove fields that shouldn't be updated directly
+        delete updateData._id;
+        delete updateData.createdAt;
+        
+        // Add updatedAt timestamp
+        updateData.updatedAt = new Date();
+        
+        let query;
+        // Support both MongoDB ObjectId and custom string IDs
+        if (ObjectId.isValid(id) && id.length === 24) {
+            query = { $or: [{ _id: new ObjectId(id) }, { id: id }] };
+        } else {
+            query = { id: id };
+        }
+        
+        const result = await collection.findOneAndUpdate(
+            query,
+            { $set: updateData },
+            { returnDocument: 'after' }
+        );
+        
+        if (!result) {
+            return res.status(404).json({ success: false, error: "Contribution non trouvée" });
+        }
+        
+        console.log("✏️ Contribution mise à jour :", id);
+        res.json({ success: true, updated: result });
+    } catch (error) {
+        console.error("❌ Erreur lors de la mise à jour :", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 🔹 Endpoint pour supprimer une contribution (DELETE)
+app.delete('/api/contributions/:id', logRequest('delete'), contributionsLimiter, async (req, res) => {
+    try {
+        if (!collection) {
+            return res.status(503).json({ success: false, error: "Base de données non initialisée" });
+        }
+        
+        const { ObjectId } = require('mongodb');
+        const id = req.params.id;
+        
+        let query;
+        // Support both MongoDB ObjectId and custom string IDs
+        if (ObjectId.isValid(id) && id.length === 24) {
+            query = { $or: [{ _id: new ObjectId(id) }, { id: id }] };
+        } else {
+            query = { id: id };
+        }
+        
+        const result = await collection.deleteOne(query);
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ success: false, error: "Contribution non trouvée" });
+        }
+        
+        console.log("🗑️ Contribution supprimée :", id);
+        res.json({ success: true, deletedId: id });
+    } catch (error) {
+        console.error("❌ Erreur lors de la suppression :", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });
